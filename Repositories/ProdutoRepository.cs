@@ -15,19 +15,31 @@ namespace ConexaoMadeiraPCP.Repositories
         private readonly string _connectionString;
         public ProdutoRepository(IConfiguration configuration) => _connectionString = configuration.GetConnectionString("PlywoodDb");
 
-        public async Task<Produto> ObterPorIdAsync(string idProduto)
+        public async Task<Produto?> ObterPorIdAsync(string idProduto)
         {
             using var connection = new NpgsqlConnection(_connectionString);
-            return await connection.QueryFirstOrDefaultAsync<Produto>(
+
+            var produto = await connection.QueryFirstOrDefaultAsync<Produto>(
                 "SELECT codigo AS IdProduto, nomepro AS NomeProduto, d_espessura AS EspessuraFinalDesejada FROM produtosc WHERE id_produto = @idProduto",
                 new { idProduto });
+
+            if (produto == null)
+            {
+                // Produto não encontrado
+                Console.WriteLine("Produto não encontrado.");
+                return null; 
+            }
+
+            Console.WriteLine(produto.NomeProduto);
+
+            return produto;
         }
 
         public async Task<IEnumerable<Produto>> ListarTodosAsync()
         {
             using var connection = new NpgsqlConnection(_connectionString);
             return await connection.QueryAsync<Produto>(
-                "SELECT id_produto AS IdProduto, nome_produto AS NomeProduto, espessura_final_desejada_mm AS EspessuraFinalDesejadaMM, quantidade_total_laminas AS QuantidadeTotalLaminas FROM produtos_erp");
+                "SELECT codigo AS IdProduto, nomepro AS NomeProduto, d_espessura AS EspessuraFinalDesejada, quantidade_total_laminas AS QuantidadeTotalLaminas FROM produtosc");
         }
     }
 
